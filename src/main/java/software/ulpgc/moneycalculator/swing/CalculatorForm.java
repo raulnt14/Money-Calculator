@@ -5,6 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import software.ulpgc.moneycalculator.Currency;
 import software.ulpgc.moneycalculator.ExchangeRate;
+import software.ulpgc.moneycalculator.fixerws.FixerCurrencyLoader;
+import software.ulpgc.moneycalculator.fixerws.FixerExchangeRateLoader;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -19,7 +21,7 @@ import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
-public class calculatorFrm extends JFrame {
+public class CalculatorForm extends JFrame {
     private static final String key = "31547d8fcf138f06d26b4f66076050d1";
 
     private JPanel panel1;
@@ -31,32 +33,24 @@ public class calculatorFrm extends JFrame {
 
     private final List<Currency> currencies;
 
-    public calculatorFrm() throws MalformedURLException {
-        URL url = new URL("http://data.fixer.io/api/symbols?access_key=" + key);
-        currencies = toList(url);
+    public CalculatorForm() throws MalformedURLException {
+        FixerCurrencyLoader currencyLoader = new FixerCurrencyLoader();
+        currencies = currencyLoader.load();
         this.createUIComponents();
         calculate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Double quantity = Double.parseDouble(fromQuantity.getText());
-                Currency from = (Currency) fromCurrency.getSelectedItem();
-                Currency to = (Currency) toCurrency.getSelectedItem();
                 try {
-                    URL url = new URL(String.format("http://data.fixer.io/api/latest?access_key=%s&base=EUR", key, from.code(), to.code()));
-                    try (InputStream is = url.openStream()) {
-                        List<ExchangeRate> list = new ArrayList<>();
-                        String json = new String(is.readAllBytes());
-                        Map<String, JsonElement> rates = new Gson().fromJson(json, JsonObject.class).get("rates").getAsJsonObject().asMap();
-                        for (String currency : rates.keySet())
-                            list.add(new ExchangeRate(currency, rates.get(currency).getAsDouble()));
-                        Double euros = quantity / rates.get(from.code()).getAsDouble();
-                        Double result = euros * rates.get(to.code()).getAsDouble();
-                        toQuantity.setText(result.toString());
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                } catch (MalformedURLException ex) {
-                    throw new RuntimeException(ex);
+                    Double quantity = Double.parseDouble(fromQuantity.getText());
+                    Currency from = (Currency) fromCurrency.getSelectedItem();
+                    Currency to = (Currency) toCurrency.getSelectedItem();
+                    FixerExchangeRateLoader exchangeRateLoader = new FixerExchangeRateLoader();
+                    List<ExchangeRate> exchangeRates = exchangeRateLoader.load(from, to);
+                    Double euros = quantity / FixerExchangeRateLoader.find(exchangeRates, from).rate();
+                    Double result = euros * FixerExchangeRateLoader.find(exchangeRates, to).rate();
+                    toQuantity.setText(result.toString());
+                } catch (Exception ex) {
+                    System.out.printf("Error during convertion: " + ex.getMessage());
                 }
             }
         });
