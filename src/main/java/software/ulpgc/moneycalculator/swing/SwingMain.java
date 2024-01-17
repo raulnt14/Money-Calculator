@@ -1,9 +1,8 @@
 package software.ulpgc.moneycalculator.swing;
 
-import java.net.MalformedURLException;
 
 public class SwingMain {
-    public static void main(String[] args) throws MalformedURLException {
+    public static void main(String[] args) {
         CalculatorForm dlg = new CalculatorForm();
         dlg.setVisible(true);
     }
