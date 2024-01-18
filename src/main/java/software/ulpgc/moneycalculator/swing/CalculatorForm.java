@@ -30,9 +30,9 @@ public class CalculatorForm extends JFrame {
     }
 
     private void createUIComponents() {
-        setContentPane(panel1);
-        setSize(600, 300);
         setTitle("Money Calculator");
+        setSize(600, 300);
+        setContentPane(panel1);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -43,5 +43,4 @@ public class CalculatorForm extends JFrame {
     private void add(String name, Command command) {
         commands.put(name, command);
     }
-
 }
